@@ -245,6 +245,7 @@ export default function App() {
         }
       });
 
+      const betSuggestion = wp >= 64 ? 'ML' : wp >= 57 ? 'RL' : Math.abs(parkFactor) >= 1.8 ? (parkFactor > 0 ? 'Over' : 'Under') : 'Pass';
       return {
         gamePk: gm.gamePk,
         awayTeam,
@@ -256,6 +257,7 @@ export default function App() {
         baseWp: isLive ? Math.round(liveWpHome) : Math.round(pregameWpHome),
         p: wp >= 50 ? (gm?.teams?.home?.team?.name || 'Home') : (gm?.teams?.away?.team?.name || 'Away'),
         pickLogo: wp >= 50 ? logoFor(homeTeam) : logoFor(awayTeam),
+        betSuggestion,
         c: getGrade(wp, isLive, Math.round(wp - 50), awaySeriesWins - homeSeriesWins),
         status: gm?.status?.detailedState || 'Scheduled',
         awayPitcher,
@@ -573,13 +575,13 @@ export default function App() {
         </div>
         <table className="w-full min-w-[1000px] text-sm">
           <thead><tr className="text-slate-400">
-            <th className="p-2 text-left">Game</th><th className="p-2 text-left">Win%</th><th className="p-2 text-left">Pick</th><th className="p-2 text-left">Grade</th><th className="p-2 text-left">Pitchers</th><th className="p-2 text-left">Records</th><th className="p-2 text-left">L10</th><th className="p-2 text-left">Streak</th><th className="p-2 text-left">Series</th>
+            <th className="p-2 text-left">Game</th><th className="p-2 text-left">Win%</th><th className="p-2 text-left">Pick</th><th className="p-2 text-left">Bet</th><th className="p-2 text-left">Grade</th><th className="p-2 text-left">Pitchers</th><th className="p-2 text-left">Records</th><th className="p-2 text-left">L10</th><th className="p-2 text-left">Streak</th><th className="p-2 text-left">Series</th>
           </tr></thead>
           <tbody>
-            {loading && <tr><td colSpan={9} className="p-3">Loading...</td></tr>}
+            {loading && <tr><td colSpan={10} className="p-3">Loading...</td></tr>}
             {!loading && sortedGames.map((game) => (
               <tr key={game.g} className="border-t border-slate-800">
-                <td className="p-2"><div className="flex items-center gap-2 whitespace-nowrap"><img src={game.awayLogo} alt={game.awayTeam} className="w-6 h-6" /><span>@</span><img src={game.homeLogo} alt={game.homeTeam} className="w-6 h-6" /></div></td><td className={`p-2 font-semibold ${game.wp >= 65 ? 'text-emerald-400' : game.wp >= 55 ? 'text-lime-300' : game.wp >= 45 ? 'text-yellow-300' : 'text-rose-400'}`}>{game.wp}%</td><td className="p-2"><div className="flex items-center justify-center"><img src={game.pickLogo} alt={game.p} className="w-6 h-6" /></div></td><td className={`p-2 font-bold ${game.c === 'A+' ? 'text-emerald-400' : game.c === 'A' ? 'text-lime-300' : game.c === 'B+' ? 'text-sky-300' : game.c === 'B' ? 'text-yellow-300' : 'text-slate-300'}`}>{game.c}</td><td className="p-2 whitespace-nowrap text-xs">{game.awayPitcher} (ERA {game.awayEra}) / {game.homePitcher} (ERA {game.homeEra})</td><td className="p-2">{game.awayRecord} / {game.homeRecord}</td><td className="p-2">{game.form10}</td><td className="p-2">{game.streak}</td><td className="p-2">{game.series}</td>
+                <td className="p-2"><div className="flex items-center gap-2 whitespace-nowrap"><img src={game.awayLogo} alt={game.awayTeam} className="w-6 h-6" /><span>@</span><img src={game.homeLogo} alt={game.homeTeam} className="w-6 h-6" /></div></td><td className={`p-2 font-semibold ${game.wp >= 65 ? 'text-emerald-400' : game.wp >= 55 ? 'text-lime-300' : game.wp >= 45 ? 'text-yellow-300' : 'text-rose-400'}`}>{game.wp}%</td><td className="p-2"><div className="flex items-center justify-center"><img src={game.pickLogo} alt={game.p} className="w-6 h-6" /></div></td><td className="p-2 font-semibold text-sky-300">{game.betSuggestion}</td><td className={`p-2 font-bold ${game.c === 'A+' ? 'text-emerald-400' : game.c === 'A' ? 'text-lime-300' : game.c === 'B+' ? 'text-sky-300' : game.c === 'B' ? 'text-yellow-300' : 'text-slate-300'}`}>{game.c}</td><td className="p-2 whitespace-nowrap text-xs">{game.awayPitcher} (ERA {game.awayEra}) / {game.homePitcher} (ERA {game.homeEra})</td><td className="p-2">{game.awayRecord} / {game.homeRecord}</td><td className="p-2">{game.form10}</td><td className="p-2">{game.streak}</td><td className="p-2">{game.series}</td>
               </tr>
             ))}
           </tbody>
