@@ -580,7 +580,7 @@ export default function App() {
           <tbody>
             {loading && <tr><td colSpan={10} className="p-3">Loading...</td></tr>}
             {!loading && sortedGames.map((game) => (
-              <tr key={game.g} className="border-t border-slate-800">
+              <tr key={game.gamePk || `${game.g}-${game.series}`} className="border-t border-slate-800">
                 <td className="p-2"><div className="flex items-center gap-2 whitespace-nowrap"><img src={game.awayLogo} alt={game.awayTeam} className="w-6 h-6" /><span>@</span><img src={game.homeLogo} alt={game.homeTeam} className="w-6 h-6" /></div></td><td className={`p-2 font-semibold ${game.wp >= 65 ? 'text-emerald-400' : game.wp >= 55 ? 'text-lime-300' : game.wp >= 45 ? 'text-yellow-300' : 'text-rose-400'}`}>{game.wp}%</td><td className="p-2"><div className="flex items-center justify-center"><img src={game.pickLogo} alt={game.p} className="w-6 h-6" /></div></td><td className="p-2 font-semibold text-sky-300">{game.betSuggestion}</td><td className={`p-2 font-bold ${game.c === 'A+' ? 'text-emerald-400' : game.c === 'A' ? 'text-lime-300' : game.c === 'B+' ? 'text-sky-300' : game.c === 'B' ? 'text-yellow-300' : 'text-slate-300'}`}>{game.c}</td><td className="p-2 whitespace-nowrap text-xs">{game.awayPitcher} (ERA {game.awayEra}) / {game.homePitcher} (ERA {game.homeEra})</td><td className="p-2">{game.awayRecord} / {game.homeRecord}</td><td className="p-2">{game.form10}</td><td className="p-2">{game.streak}</td><td className="p-2">{game.series}</td>
               </tr>
             ))}
@@ -590,7 +590,7 @@ export default function App() {
       </div>
 
       <div className="grid grid-cols-1 lg:grid-cols-4 gap-4 mt-4">
-        <div className="rounded-2xl bg-slate-900 p-4"><h2 className="text-xl font-semibold mb-3">Top Signals</h2>{topGames.map((g)=><div key={g.g} className="bg-slate-800 rounded-xl p-3 mb-2 flex justify-between"><span>{g.p}</span><span>{g.modelEdge}</span></div>)}</div>
+        <div className="rounded-2xl bg-slate-900 p-4"><h2 className="text-xl font-semibold mb-3">Top Signals</h2>{topGames.map((g)=><div key={g.gamePk || g.g} className="bg-slate-800 rounded-xl p-3 mb-2 flex justify-between"><span>{g.p}</span><span>{g.modelEdge}</span></div>)}</div>
         <div className="rounded-2xl bg-slate-900 p-4"><h2 className="text-xl font-semibold mb-3">Elite Team Props</h2>{playerProps.map((p,i)=><div key={i} className="bg-slate-800 rounded-xl p-3 mb-2"><div>{p.name}</div><div className="text-slate-400">{p.edge} • {p.conf}</div></div>)}</div>
         <div className="rounded-2xl bg-slate-900 p-4"><h2 className="text-xl font-semibold mb-3">Metrics</h2><div className="bg-slate-800 rounded-xl p-3 mb-2">Live Games: {liveCount}</div><div className="bg-slate-800 rounded-xl p-3 mb-2">Loaded Games: {games.length}</div><div className="bg-slate-800 rounded-xl p-3">Mode: Pythagorean Live Model + True RA Inputs + Elite Bullpen + Smart Park + Monte Carlo 2.0 10K + Confirmed Lineups</div></div>
         <div className="rounded-2xl bg-slate-900 p-4"><h2 className="text-xl font-semibold mb-3">Parlay Builder Elite</h2>
