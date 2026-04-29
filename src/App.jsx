@@ -33,6 +33,9 @@ export default function App() {
   const [error, setError] = useState('');
   const [sortBy, setSortBy] = useState('confidence');
   const [lastUpdated, setLastUpdated] = useState(new Date().toLocaleTimeString());
+  const [parlayLegs, setParlayLegs] = useState(3);
+  const [totalsLegs, setTotalsLegs] = useState(4);
+  const [riskProfile, setRiskProfile] = useState('balanced');
   const teamLogoMap = {
     'New York Yankees':'147','Boston Red Sox':'111','Los Angeles Dodgers':'119','San Diego Padres':'135','New York Mets':'121','Atlanta Braves':'144','Chicago Cubs':'112','St. Louis Cardinals':'138','Houston Astros':'117','Texas Rangers':'140','Toronto Blue Jays':'141','Tampa Bay Rays':'139','Philadelphia Phillies':'143','Milwaukee Brewers':'158','Arizona Diamondbacks':'109','San Francisco Giants':'137','Seattle Mariners':'136','Cleveland Guardians':'114','Detroit Tigers':'116','Minnesota Twins':'142','Kansas City Royals':'118','Baltimore Orioles':'110','Pittsburgh Pirates':'134','Cincinnati Reds':'113','Miami Marlins':'146','Washington Nationals':'120','Colorado Rockies':'115','Los Angeles Angels':'108','Athletics':'133','Chicago White Sox':'145'
   };
@@ -528,6 +531,13 @@ export default function App() {
   const safeParlay = topGames.slice(0, 2);
   const balancedParlay = topGames.slice(0, 3);
   const aggressiveParlay = sortedGames.slice(0, 5);
+  const riskPools = {
+    safe: sortedGames.filter(g => g.wp >= 60),
+    balanced: sortedGames.filter(g => g.wp >= 55),
+    aggressive: sortedGames.filter(g => g.wp >= 50),
+    underdog: sortedGames.filter(g => g.wp < 50).sort((a,b)=>b.wp-a.wp)
+  };
+  const customParlay = (riskPools[riskProfile] && riskPools[riskProfile].length ? riskPools[riskProfile] : sortedGames).slice(0, parlayLegs);
 
   const calcParlay = (legs) => {
     const confidence = legs.length ? Math.round(legs.reduce((acc, g) => acc + g.wp, 0) / legs.length) : 0;
@@ -538,8 +548,21 @@ export default function App() {
   const safeData = calcParlay(safeParlay);
   const balancedData = calcParlay(balancedParlay);
   const aggressiveData = calcParlay(aggressiveParlay);
+  const customData = calcParlay(customParlay);
   const underdogParlay = sortedGames.filter((g) => g.wp < 50).slice(0, 3);
   const underdogData = calcParlay(underdogParlay);
+  const totalsPool = sortedGames.filter(g => g.betSuggestion === 'Over' || g.betSuggestion === 'Under');
+  const fallbackTotals = sortedGames.filter(g => !(g.betSuggestion === 'Over' || g.betSuggestion === 'Under')).map(g => ({...g, betSuggestion: g.parkImpact >= 0 ? 'Lean Over' : 'Lean Under'}));
+  const expandedTotalsPool = [...totalsPool, ...fallbackTotals];
+  while (expandedTotalsPool.length && expandedTotalsPool.length < 6) expandedTotalsPool.push(...expandedTotalsPool.slice(0, 6 - expandedTotalsPool.length));
+  const totalsSource = expandedTotalsPool.map(g => ({...g, totalPick:g.betSuggestion}));
+  const makeTotals = (n) => totalsSource.slice(0,n);
+  const totals2 = makeTotals(2), totals3 = makeTotals(3), totals4 = makeTotals(4), totals5 = makeTotals(5), totals6 = makeTotals(6);
+  const totals2Data = calcParlay(totals2.map(g => ({...g,p:`${g.g} ${g.totalPick}`})));
+  const totals3Data = calcParlay(totals3.map(g => ({...g,p:`${g.g} ${g.totalPick}`})));
+  const totals4Data = calcParlay(totals4.map(g => ({...g,p:`${g.g} ${g.totalPick}`})));
+  const totals5Data = calcParlay(totals5.map(g => ({...g,p:`${g.g} ${g.totalPick}`})));
+  const totals6Data = calcParlay(totals6.map(g => ({...g,p:`${g.g} ${g.totalPick}`})));
 
   return (
     <div className="p-6 bg-slate-950 min-h-screen text-white font-sans">
@@ -593,27 +616,14 @@ export default function App() {
         <div className="rounded-2xl bg-slate-900 p-4"><h2 className="text-xl font-semibold mb-3">Top Signals</h2>{topGames.map((g)=><div key={g.gamePk || g.g} className="bg-slate-800 rounded-xl p-3 mb-2 flex justify-between"><span>{g.p}</span><span>{g.modelEdge}</span></div>)}</div>
         <div className="rounded-2xl bg-slate-900 p-4"><h2 className="text-xl font-semibold mb-3">Elite Team Props</h2>{playerProps.map((p,i)=><div key={i} className="bg-slate-800 rounded-xl p-3 mb-2"><div>{p.name}</div><div className="text-slate-400">{p.edge} • {p.conf}</div></div>)}</div>
         <div className="rounded-2xl bg-slate-900 p-4"><h2 className="text-xl font-semibold mb-3">Metrics</h2><div className="bg-slate-800 rounded-xl p-3 mb-2">Live Games: {liveCount}</div><div className="bg-slate-800 rounded-xl p-3 mb-2">Loaded Games: {games.length}</div><div className="bg-slate-800 rounded-xl p-3">Mode: Pythagorean Live Model + True RA Inputs + Elite Bullpen + Smart Park + Monte Carlo 2.0 10K + Confirmed Lineups</div></div>
-        <div className="rounded-2xl bg-slate-900 p-4"><h2 className="text-xl font-semibold mb-3">Parlay Builder Elite</h2>
+        <div className="rounded-2xl bg-slate-900 p-4"><div className="flex items-center justify-between gap-2 mb-3 flex-wrap"><h2 className="text-xl font-semibold">Parlay Builder Elite</h2><div className="flex gap-2"><select value={riskProfile} onChange={(e)=>setRiskProfile(e.target.value)} className="bg-slate-800 rounded-xl px-2 py-1 text-xs"><option value="safe">Safe</option><option value="balanced">Balanced</option><option value="aggressive">Aggressive</option><option value="underdog">Underdog</option></select><select value={parlayLegs} onChange={(e)=>setParlayLegs(parseInt(e.target.value))} className="bg-slate-800 rounded-xl px-2 py-1 text-xs"><option value="2">2 Legs</option><option value="3">3 Legs</option><option value="4">4 Legs</option><option value="5">5 Legs</option><option value="6">6 Legs</option></select><select value={totalsLegs} onChange={(e)=>setTotalsLegs(parseInt(e.target.value))} className="bg-slate-800 rounded-xl px-2 py-1 text-xs"><option value="2">Totals 2</option><option value="3">Totals 3</option><option value="4">Totals 4</option><option value="5">Totals 5</option><option value="6">Totals 6</option></select></div></div>
           <div className="bg-slate-800 rounded-xl p-3 mb-3">
-            <div className="font-semibold mb-2">Safe 2-Leg</div>
-            {safeData.legs.map((pick,i)=><div key={`safe-${i}`} className="text-sm mb-1">Leg {i+1}: {pick.p} ({pick.wp}%)</div>)}
-            <div className="text-emerald-300 text-sm">Confidence {safeData.confidence}% • Edge +{safeData.edge}</div>
+            <div className="font-semibold mb-2">Custom Main Parlay ({parlayLegs}-Leg • {riskProfile.charAt(0).toUpperCase()+riskProfile.slice(1)})</div>
+            {customData.legs.map((pick,i)=><div key={`cust-${i}`} className="text-sm mb-1">Leg {i+1}: {pick.p} ({pick.wp}%)</div>)}
+            <div className="text-emerald-300 text-sm">Confidence {customData.confidence}% • Edge +{customData.edge}</div>
           </div>
-          <div className="bg-slate-800 rounded-xl p-3 mb-3">
-            <div className="font-semibold mb-2">Balanced 3-Leg</div>
-            {balancedData.legs.map((pick,i)=><div key={`bal-${i}`} className="text-sm mb-1">Leg {i+1}: {pick.p} ({pick.wp}%)</div>)}
-            <div className="text-sky-300 text-sm">Confidence {balancedData.confidence}% • Edge +{balancedData.edge}</div>
-          </div>
-          <div className="bg-slate-800 rounded-xl p-3 mb-3">
-            <div className="font-semibold mb-2">Aggressive 5-Leg</div>
-            {aggressiveData.legs.map((pick,i)=><div key={`agg-${i}`} className="text-sm mb-1">Leg {i+1}: {pick.p} ({pick.wp}%)</div>)}
-            <div className="text-rose-300 text-sm">Confidence {aggressiveData.confidence}% • Edge +{aggressiveData.edge}</div>
-          </div>
-          <div className="bg-slate-800 rounded-xl p-3">
-            <div className="font-semibold mb-2">Underdog 3-Leg</div>
-            {underdogData.legs.length === 0 ? <div className="text-sm text-slate-400">No qualified underdogs today.</div> : underdogData.legs.map((pick,i)=><div key={`dog-${i}`} className="text-sm mb-1">Leg {i+1}: {pick.p} ({pick.wp}%)</div>)}
-            <div className="text-amber-300 text-sm">Confidence {underdogData.confidence}% • Edge +{underdogData.edge}</div>
-          </div>
+          {(() => { const totalsMap = {2:[totals2,totals2Data],3:[totals3,totals3Data],4:[totals4,totals4Data],5:[totals5,totals5Data],6:[totals6,totals6Data]}; const chosen = totalsMap[totalsLegs]; const legs = chosen[0]; const data = chosen[1]; return <div className="bg-slate-800 rounded-xl p-3 mb-3"><div className="font-semibold mb-2">Totals Only {totalsLegs}-Leg</div>{legs.length===0 ? <div className="text-sm text-slate-400">No qualified totals today.</div> : legs.map((pick,i)=><div key={`tot-${i}`} className="text-sm mb-1">Leg {i+1}: {pick.g} • {pick.totalPick}</div>)}<div className="text-violet-300 text-sm">Confidence {data.confidence}% • Edge +{data.edge}</div></div>; })()}
+          
         </div>
       </div>
     </div>
